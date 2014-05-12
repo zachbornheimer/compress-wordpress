@@ -1,0 +1,214 @@
+#!/usr/local/bin/perl
+
+# Steps to Optimize Wordpress
+# 0 . Make sure that nice, sed, and which are present.  If not, suggest not running this.
+# 1a. Check for wp (php manager for wordpress)
+# 1b. If no wp, offer to install it, check for phpize, etc.
+# 2a. Check for Image Optimizers, check for find, optipng, advdef, jpegoptim
+# 2b. Check for Image Optimizers (agressive), check for find, pngquant, advdef, jpegoptim
+# 3a. Check for javascript optimization tools: java, closure-compiler
+# 3b. Check for css optimization tools: java, yui-compressor
+
+# Command Line Options
+# --no-css, --no-javascript, --no-wp-update, --no-wp-redownload,
+# --aggressive, --simple-image-optimze
+#
+# Agressive updates wordpress, redownloads wordpress core to make sure everything is in-tact, if any no-* or simple-image-optimize is present, then it overrides the agressive image optimizations
+
+use strict;
+use warnings;
+use feature qw/ say switch/;
+use Getopt::Long;
+use Exporter;
+use Test::Simple tests => 18;
+
+my ($noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization) = '';
+
+GetOptions('no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization);
+
+=pod
+
+=head2 compress-wordpress (Zysys)
+
+=head2 Requirements
+
+This perl program requires perl, sed, mv, find, which, nice, wp (the wordpress cli manager), java, closure-compiler, yui-compressor, optipng (simple), pngquant (aggressive), advdef, jpegoptim, curl, unzip, and sudo (if things need to be installed).
+
+Note: closure-compiler and yui-compressor need to be in the path (you may need to chmod them to something greater than (not equal to) 644).
+
+=head2 Requirement Installation
+
+At this time, the software defaults to yum as the package manager
+
+=cut
+
+my $packageManagerInstall = "yum install -y";
+my $wpcontentdir;
+my @notInstalled;
+my $wpcli;
+do {
+    @notInstalled = check_software();
+    say foreach @notInstalled;
+    $wpcli = "wp";
+    install($_) foreach (@notInstalled);
+} while ($#notInstalled >= 0);
+
+# use wp to check if this is the right path
+my $pathCheck = `wp status --directory=\`pwd\` 2>&1`;
+if ($pathCheck =~ /'status' is not a registered wp command/i) {
+    $pathCheck = 1;
+} else {
+    $pathCheck = 0;
+}
+if (!ok($pathCheck, 'Valid WordPress Installation')) {
+    say "Please run this in the WordPress installation directory.";
+    exit;
+}
+# Read wp-config, look for manually configured wp-content dir
+if (-e "wp-config.php") {
+    $wpcontentdir = `wp eval "print WP_CONTENT_DIR;" 2>&1`;
+} else {
+    say "Please run this in the WordPress Installation directory -- wp-config.php must be present.";
+    exit;
+}
+if ($aggressive) {
+    # Update Current Wordpress installation
+    system("wp plugin update --all; wp theme update --all; wp core update; wp core update-db");
+    # Redownload Core
+    system("wp core download --force");
+    # Upgrade WP Database, if necessary
+    system("wp core update-db");
+}
+
+if (!$noCSS) {
+    # Get css files from wp-admin, wp-includes, and wp-content
+    my $files = `find {wp-admin,wp-includes,$wpcontentdir} -iname "*.css" -print`;
+    my @files = split /\n/, $files;
+    # Protect style.css's (specifically themes) with find & sed
+    system('find . -name "style.css" -print -exec sed -i "0,/\/\*/{s/\/\*/\/*\!/}" {} \;');
+    # Run yui-compression on found css
+    my $previous = "";
+    foreach (@files) {
+        my $code = "";
+        chomp;
+        if (!-e $_) { next; }
+        until ($code ne "") {
+            print "Working On: $_\n\r";
+            $code = `/bin/nice -n 19 java -jar \`which yui-compressor\` --type css $_`;
+            $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
+            $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
+            $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
+            if ($code ne "") {
+                open(F, ">$_");
+                print F $code;
+                close(F);
+            } else {
+                next if $previous eq $_;
+                $code = 0;
+            }
+
+            $previous = $_;
+        }
+    }
+}
+
+if (!$noJavascript) {
+    # Get JS files from wp-admin, wp-includes, and wp-content
+    my $files = `find {wp-admin,wp-includes,$wpcontentdir} -iname "*.js" -print`;
+    my @files = split /\n/, $files;
+    # Run closure-compiler on found js
+    my $previous = "";
+    foreach (@files) {
+        my $code = "";
+        chomp;
+        if (!-e $_) { next; }
+        until ($code ne "") {
+            print "Working On: $_\n\r";
+            $code = `/bin/nice -19 java -jar /var/www/vhosts/zysys.org/httpdocs/zyscripts.com/compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --js $_`;
+            $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
+            $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
+            $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
+            if ($code ne "") {
+                open(F, ">$_");
+                print F $code;
+                close(F);
+            } else {
+                next if $previous eq $_;
+                $code = 0;
+            }
+
+            $previous = $_;
+        }
+    }
+}
+
+if (!$noImageOptimization) {
+    if (!$simpleImageOptimization && $aggressive) {
+        # Run pngquant
+        system('find '.$wpcontentdir.' -iregex ".*\.\(png\|PNG\)" -type f -print -exec nice -19 pngquant -f --ext .png --speed 1 {} \;');
+    } else {
+        # Run optipng
+        system('find '.$wpcontentdir.' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 optipng -o6 -fix {} \;');
+    }
+    # Run aggressively compress wordpress core and run advdef and jpegoptim on all images files
+    system('find {wp-admin,wp-includes} -iregex ".*\.\(png\|PNG\)" -type f -print -exec nice -19 pngquant -f --ext .png --speed 1 {} \;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 /usr/local/bin/jpegoptim --strip-all {} \;');
+}
+
+say "Optimization Complete.";
+
+
+sub check_software {
+    my $output;
+    my @notInstalled;
+    my $wpcli;
+    push @notInstalled, 'which' if !ok( `which which 2>&1` !~ /not found/, "which found" );
+    push @notInstalled, 'find' if !test_program('find');
+    push @notInstalled, 'sed' if !test_program('sed');
+    push @notInstalled, 'which' if !test_program('which');
+    push @notInstalled, 'nice' if !test_program('nice');
+    push @notInstalled, 'closure-compiler' if !test_program('closure-compiler');
+    push @notInstalled, 'yui-compressor' if !test_program('yui-compressor');
+    push @notInstalled, 'java' if !test_program('java');
+    push @notInstalled, 'optipng' if !test_program('optipng');
+    push @notInstalled, 'pngquant' if !test_program('pngquant');
+    push @notInstalled, 'advdef' if !test_program('advdef');
+    push @notInstalled, 'jpegoptim' if !test_program('jpegoptim');
+    push @notInstalled, 'curl' if !test_program('curl');
+    push @notInstalled, 'sudo' if !test_program('sudo');
+    push @notInstalled, 'unzip' if !test_program('unzip');
+    push @notInstalled, 'mv' if !test_program('mv');
+    push @notInstalled, 'wp' if !test_program('wp');
+
+    return @notInstalled;
+}
+
+sub install {
+    my $program = shift;
+    if ($program eq "wp") {
+        system("curl -L https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > wp-cli.phar; chmod +x wp-cli.phar;  sudo mv wp-cli.phar /usr/bin/wp;");        
+    }
+    if (grep (/\Q$program\E/, q/ which find sed nice optipng pngquant jpegoptim curl sudo mv unzip /)) {
+        system("sudo $packageManagerInstall $program");
+    }
+    if ($program eq "java") {
+        system("sudo $packageManagerInstall java7");
+    }
+    if ($program eq "phpize") {
+        system("sudo $packageManagerInstall php-devel");
+    }
+    if ($program eq "advdef") {
+        system("sudo $packageManagerInstall advancecomp");
+    }
+    if ($program eq "closure-compiler") {
+        system("curl -LO http://dl.google.com/closure-compiler/compiler-latest.zip; unzip compiler-latest.zip -d /tmp; mv /tmp/compiler.jar /usr/sbin/closure-compiler; chmod 700 /usr/sbin/closure-compiler");
+    }
+    if ($program eq "yui-compressor") {
+        system("curl -Lo /usr/sbin/yui-compressor https://github.com/yui/yuicompressor/releases/download/v2.4.8/yuicompressor-2.4.8.jar; chmod 700 /usr/sbin/yui-compressor");
+    }
+}
+
+sub test_program {
+    my $_ = shift;
+    ok( `which $_ 2>&1` !~ /no \Q$_\E in/i, "$_ found" );
+}
