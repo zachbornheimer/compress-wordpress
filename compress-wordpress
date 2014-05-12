@@ -1,5 +1,6 @@
 #!/usr/local/bin/perl
 
+
 # Steps to Optimize Wordpress
 # 0 . Make sure that nice, sed, and which are present.  If not, suggest not running this.
 # 1a. Check for wp (php manager for wordpress)
@@ -36,9 +37,30 @@ This perl program requires perl, sed, mv, find, which, nice, wp (the wordpress c
 
 Note: closure-compiler and yui-compressor need to be in the path (you may need to chmod them to something greater than (not equal to) 644).
 
+Also, if this software isn't installed, it will install it.  If closure-compiler or yui-compressor are installed, but unusable, it will fail without an error message.
+
 =head2 Requirement Installation
 
 At this time, the software defaults to yum as the package manager
+
+=head2 License
+
+This software is licensed under the GPLv2.  All software is licensed under their respective licenses.
+
+compress-wordpress is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+
+compress-wordpress is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with compress-wordpress.  If not, see <http://www.gnu.org/licenses/>.
+
+
 
 =cut
 
