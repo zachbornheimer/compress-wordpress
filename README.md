@@ -1,8 +1,12 @@
 compress-wordpress
 ==================
 
+(Licensed under the GPLv2)
+
 Allows for the compression of wordpress
 
-To install, adjust the shebang line, copy to /usr/sbin or /usr/local/sbin (or an applicable alternative), then run chmod +x the script.
+To install, run the included installation file (install.sh); it will install in /usr/local/sbin/
 
-It should take care of the rest.
+We usually run the software in the target directory like this:
+
+screen compress-wordpress --aggressive
