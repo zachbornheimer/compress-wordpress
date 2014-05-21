@@ -21,7 +21,6 @@ use strict;
 use warnings;
 use feature qw/ say switch/;
 use Getopt::Long;
-use Exporter;
 use Test::Simple tests => 18;
 
 my ($noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization) = '';
