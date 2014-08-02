@@ -240,6 +240,6 @@ sub install {
 }
 
 sub test_program {
-    my $_ = shift;
+    $_ = shift;
     ok( `which $_ 2>&1` !~ /no \Q$_\E in/i, "$_ found" );
 }
