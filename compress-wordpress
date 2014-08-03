@@ -116,7 +116,7 @@ if (!$noCSS) {
     my $files = `find {wp-admin,wp-includes,$wpcontentdir} -iname "*.css" -print`;
     my @files = split /\n/, $files;
     # Protect style.css's (specifically themes) with find & sed
-    system('find . -name "style.css" -print -exec sed -i "0,/\/\*/{s/\/\*/\/*\!/}" {} \;');
+    system('find . -name "style.css" -print -exec sed -i "0,/\/\*/{s/\/\*\!*/\/*\!/}" {} \;');
     # Run yui-compression on found css
     my $previous = "";
     foreach (@files) {
