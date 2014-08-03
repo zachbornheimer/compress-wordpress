@@ -193,24 +193,13 @@ sub check_software {
     my $output;
     my @notInstalled;
     my $wpcli;
-    push @notInstalled, 'which' if !ok( `which which 2>&1` !~ /not found/, "which found" );
-    push @notInstalled, 'find' if !test_program('find');
-    push @notInstalled, 'sed' if !test_program('sed');
-    push @notInstalled, 'which' if !test_program('which');
-    push @notInstalled, 'nice' if !test_program('nice');
-    push @notInstalled, 'closure-compiler' if !test_program('closure-compiler');
-    push @notInstalled, 'yui-compressor' if !test_program('yui-compressor');
-    push @notInstalled, 'java' if !test_program('java');
-    push @notInstalled, 'optipng' if !test_program('optipng');
-    push @notInstalled, 'pngquant' if !test_program('pngquant');
-    push @notInstalled, 'advdef' if !test_program('advdef');
-    push @notInstalled, 'jpegoptim' if !test_program('jpegoptim');
-    push @notInstalled, 'curl' if !test_program('curl');
-    push @notInstalled, 'sudo' if !test_program('sudo');
-    push @notInstalled, 'unzip' if !test_program('unzip');
-    push @notInstalled, 'mv' if !test_program('mv');
-    push @notInstalled, 'wp' if !test_program('wp');
+    my @softwareToTest = qw/ find sed which nice closure-compiler yui-compressor java optipng
+                       pngquant advdef jpegoptim curl sudo unzip mv wp /;
 
+    push @notInstalled, 'which' if !ok( `which which 2>&1` !~ /not found/, "which found" );
+    foreach (@softwareToTest) {
+        push @notInstalled, $_ if !test_program($_);
+    }   
     return @notInstalled;
 }
 
