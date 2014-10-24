@@ -159,6 +159,7 @@ if (!$noJavascript) {
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
+            $code = "" if $code =~ /.*ERROR - Parse error\..*/i;
             if ($code ne "") {
                 open(F, ">$_");
                 print F $code;
