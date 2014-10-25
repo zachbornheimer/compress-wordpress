@@ -125,7 +125,7 @@ if (!$noCSS) {
         if (!-e $_) { next; }
         until ($code ne "") {
             print "Working On: $_\n\r";
-            $code = `/bin/nice -n 19 java -jar \`which yui-compressor\` --type css $_`;
+            $code = `/bin/nice -n 19 java -jar \`which yui-compressor\` --type css $_ 2>&1 3>&1`;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
@@ -155,11 +155,13 @@ if (!$noJavascript) {
         if (!-e $_) { next; }
         until ($code ne "") {
             print "Working On: $_\n\r";
-            $code = `/bin/nice -19 java -jar /var/www/vhosts/zysys.org/httpdocs/zyscripts.com/compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --js $_`;
+            $code = `/bin/nice -19 java -jar /var/www/vhosts/zysys.org/httpdocs/zyscripts.com/compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --js $_ 2>&1 3>&1`;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
-            $code = "" if $code =~ /.*ERROR - Parse error\..*/i;
+            $code = "" if $code =~ /.*ERROR - .*/i;
+            $code = "" if $code =~ /.*WARNING - \..*/i;
+            $code = "" if $code =~ /\d+error\(s\), \d+ warning\(s\)/;
             if ($code ne "") {
                 open(F, ">$_");
                 print F $code;
