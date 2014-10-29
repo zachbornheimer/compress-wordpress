@@ -160,7 +160,7 @@ if (!$noJavascript) {
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
             $code = "" if $code =~ /.*ERROR - .*/i;
-            $code = "" if $code =~ /.*WARNING - \..*/i;
+            $code = "" if $code =~ /.*WARNING - .*/i;
             $code = "" if $code =~ /\d+error\(s\), \d+ warning\(s\)/;
             if ($code ne "") {
                 open(F, ">$_");
