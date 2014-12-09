@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 
 # Steps to Optimize Wordpress
@@ -78,12 +78,12 @@ my $wpcli;
 do {
     @notInstalled = check_software();
     say foreach @notInstalled;
-    $wpcli = "wp";
+    $wpcli = "wp --allow-root ";
     install($_) foreach (@notInstalled);
 } while ($#notInstalled >= 0);
 
 # use wp to check if this is the right path
-my $pathCheck = `wp status --directory=\`pwd\` 2>&1`;
+my $pathCheck = `$wpcli --allow-root status --directory=\`pwd\` 2>&1`;
 if ($pathCheck =~ /'status' is not a registered wp command/i) {
     $pathCheck = 1;
 } else {
@@ -95,19 +95,19 @@ if (!ok($pathCheck, 'Valid WordPress Installation')) {
 }
 # Read wp-config, look for manually configured wp-content dir
 if (-e "wp-config.php") {
-    $wpcontentdir = `wp eval "print WP_CONTENT_DIR;" 2>&1`;
+    $wpcontentdir = `$wpcli eval "print WP_CONTENT_DIR;" 2>&1`;
 } else {
     say "Please run this in the WordPress Installation directory -- wp-config.php must be present.";
     exit;
 }
 if ($aggressive) {
     # Update Current Wordpress installation
-    system("wp plugin update --all; wp theme update --all;wp core update; wp core update-db;") unless $noWPUpdate;
+    system("$wpcli plugin update --all; $wpcli theme update --all;$wpcli core update; $wpcli core update-db;") unless $noWPUpdate;
     if (!$noWPRedownload) {
         # Redownload Core
-        system("wp core download --force");
+        system("$wpcli core download --force");
         # Upgrade WP Database, if necessary
-        system("wp core update-db");
+        system("$wpcli core update-db");
     }
 }
 
@@ -186,7 +186,7 @@ if (!$noImageOptimization) {
     }
     # Run aggressively compress wordpress core and run advdef and jpegoptim on all images files
     system('find {wp-admin,wp-includes} -iregex ".*\.\(png\|PNG\)" -type f -print -exec nice -19 pngquant -f --ext .png --speed 1 {} \;');
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 /usr/local/bin/jpegoptim --strip-all {} \;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 jpegoptim --strip-all {} \;');
 }
 
 say "Optimization Complete.";
