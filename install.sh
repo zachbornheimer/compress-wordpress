@@ -5,7 +5,7 @@
 echo "Cannot install compress-wordpress."
 test -e /usr/local/sbin/compress-wordpress;
 
-if [ $? == 1 ]
+if [ $? == 0 ]
 then
     echo "File (/usr/local/sbin/compress-wordpress) Exists...Thats Bad";
 else
@@ -14,7 +14,7 @@ fi
 
 test -e /usr/sbin/compress-wordpress;
 
-if [ $? == 1 ]
+if [ $? == 0 ]
 then
     echo "File (/usr/sbin/compress-wordpress) Exists...Thats Bad";
 else
