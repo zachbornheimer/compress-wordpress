@@ -5,8 +5,8 @@
 # 0 . Make sure that nice, sed, and which are present.  If not, suggest not running this.
 # 1a. Check for wp (php manager for wordpress)
 # 1b. If no wp, offer to install it, check for phpize, etc.
-# 2a. Check for Image Optimizers, check for find, optipng, advdef, jpegoptim
-# 2b. Check for Image Optimizers (agressive), check for find, pngquant, advdef, jpegoptim
+# 2a. If aggressive, redownload the wordpress core.
+# 2b. Check for Image Optimizers, check for find, optipng, advdef, mozjpeg
 # 3a. Check for javascript optimization tools: java, closure-compiler
 # 3b. Check for css optimization tools: java, yui-compressor
 
@@ -177,16 +177,8 @@ if (!$noJavascript) {
 }
 
 if (!$noImageOptimization) {
-    if (!$simpleImageOptimization && $aggressive) {
-        # Run pngquant
-        system('find '.$wpcontentdir.' -iregex ".*\.\(png\|PNG\)" -type f -print -exec nice -19 pngquant -f --ext .png --speed 1 {} \;');
-    } else {
-        # Run optipng
-        system('find '.$wpcontentdir.' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 optipng -o6 -fix {} \;');
-    }
-    # Run aggressively compress wordpress core and run advdef and jpegoptim on all images files
-    system('find {wp-admin,wp-includes} -iregex ".*\.\(png\|PNG\)" -type f -print -exec nice -19 pngquant -f --ext .png --speed 1 {} \;');
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 jpegoptim --strip-all {} \;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 optipng -o6 -fix {} \;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 /usr/local/bin/mozjpeg -outfile {} {} \;;');
 }
 
 say "Optimization Complete.";
@@ -196,8 +188,8 @@ sub check_software {
     my $output;
     my @notInstalled;
     my $wpcli;
-    my @softwareToTest = qw/ find sed which nice closure-compiler yui-compressor java optipng
-                       pngquant advdef jpegoptim curl sudo unzip mv wp /;
+    my @softwareToTest = qw/ find sed which nice closure-compiler yui-compressor java 
+                             optipng mozjpeg advdef curl sudo unzip mv wp /;
 
     push @notInstalled, 'which' if !ok( `which which 2>&1` !~ /not found/, "which found" );
     foreach (@softwareToTest) {
@@ -211,7 +203,7 @@ sub install {
     if ($program eq "wp") {
         system("curl -L https://raw.github.com/wp-cli/builds/gh-pages/phar/wp-cli.phar > wp-cli.phar; chmod +x wp-cli.phar;  sudo mv wp-cli.phar /usr/bin/wp;");        
     }
-    if (grep (/\Q$program\E/, q/ which find sed nice optipng pngquant jpegoptim curl sudo mv unzip /)) {
+    if (grep (/\Q$program\E/, q/ which find sed nice optipng mozjpeg curl sudo mv unzip /)) {
         system("sudo $packageManagerInstall $program");
     }
     if ($program eq "java") {
