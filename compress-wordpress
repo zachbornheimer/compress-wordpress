@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-
 # Steps to Optimize Wordpress
 # 0 . Make sure that nice, sed, and which are present.  If not, suggest not running this.
 # 1a. Check for wp (php manager for wordpress)
@@ -12,8 +11,8 @@
 
 # Command Line Options
 # --no-wp-update, --no-wp-redownload, --simple-image-optimzation,
-# --no-image-optimization, --aggressive, --no-css,
-# --no-js, --no-javascript
+# --no-image-optimization, --ignore-uploaded-images, 
+# --aggressive, --no-css, --no-js, --no-javascript
 
 # Agressive updates wordpress, redownloads wordpress core to make sure everything is in-tact, if any no-* or simple-image-optimize is present, then it overrides the agressive image optimizations
 
@@ -23,9 +22,9 @@ use feature qw/ say switch/;
 use Getopt::Long;
 use Test::Simple tests => 18;
 
-my ($noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization) = '';
+my ($noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization, $ignoreUploadedImages) = '';
 
-GetOptions('no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization);
+GetOptions('no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization, 'ignore-uploaded-images'=>\$ignoreUploadedImages);
 
 =pod
 
@@ -177,8 +176,14 @@ if (!$noJavascript) {
 }
 
 if (!$noImageOptimization) {
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 optipng -o6 -fix {} \;');
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 /usr/local/bin/mozjpeg -outfile {} {} \;;');
+    my $ignoreBlogsDirImgopt;
+    if ($ignoreUploadedImages) {
+        $ignoreBlogsDirImgopt = "! -wholename '*/blogs.dir/*' ! -wholename '*/uploads/*' ";
+    } else {
+        $ignoreUploadedImages = "";
+    }
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 optipng -o6 -fix {} \;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 /usr/local/bin/mozjpeg -outfile {} {} \;;');
 }
 
 say "Optimization Complete.";
