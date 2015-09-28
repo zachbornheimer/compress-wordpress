@@ -18,13 +18,20 @@
 
 use strict;
 use warnings;
-use feature qw/ say switch/;
 use Getopt::Long;
-use Test::Simple tests => 18;
+use feature qw/ say switch/;
 
-my ($noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization, $ignoreUploadedImages) = '';
+my ($zysys, $noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization, $ignoreUploadedImages) = '';
 
-GetOptions('no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization, 'ignore-uploaded-images'=>\$ignoreUploadedImages);
+GetOptions('zysys'=>\$zysys, 'no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization, 'ignore-uploaded-images'=>\$ignoreUploadedImages);
+
+if ($zysys) {
+    print "zysys";
+    exit;
+} else {
+    use Test::Simple tests => 18;
+}
+
 
 =pod
 
