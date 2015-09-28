@@ -70,6 +70,7 @@ along with compress-wordpress.  If not, see <http://www.gnu.org/licenses/>.
 
 =cut
 
+my $nice = 17; # this is the nice value used for processes manipulating multiple files
 my $packageManagerInstall = "yum install -y";
 my $wpcontentdir;
 my @notInstalled;
@@ -124,7 +125,7 @@ if (!$noCSS) {
         if (!-e $_) { next; }
         until ($code ne "") {
             print "Working On: $_\n\r";
-            $code = `/bin/nice -n 19 java -jar \`which yui-compressor\` --type css $_ 2>&1 3>&1`;
+            $code = `/bin/nice -n $nice java -jar \`which yui-compressor\` --type css $_ 2>&1 3>&1`;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
@@ -154,7 +155,7 @@ if (!$noJavascript) {
         if (!-e $_) { next; }
         until ($code ne "") {
             print "Working On: $_\n\r";
-            $code = `/bin/nice -19 java -jar /var/www/vhosts/zysys.org/httpdocs/zyscripts.com/compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --js $_ 2>&1 3>&1`;
+            $code = `/bin/nice -n $nice java -jar /var/www/vhosts/zysys.org/httpdocs/zyscripts.com/compiler.jar --compilation_level SIMPLE_OPTIMIZATIONS --js $_ 2>&1 3>&1`;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*could not create the java virtual machine.*/i;
             $code = "" if $code =~ /.*error occurred during initialization of vm.*/i;
@@ -182,8 +183,8 @@ if (!$noImageOptimization) {
     } else {
         $ignoreUploadedImages = "";
     }
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 optipng -o6 -fix {} \;');
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -19 advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -19 /usr/local/bin/mozjpeg -outfile {} {} \;;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -n '.$nice.' optipng -o6 -fix {} \;');
+    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -n '.$nice.' advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -n '.$nice.' /usr/local/bin/mozjpeg -outfile {} {} \;;');
 }
 
 say "Optimization Complete.";
