@@ -21,9 +21,9 @@ use warnings;
 use Getopt::Long;
 use feature qw/ say switch/;
 
-my ($zysys, $noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization, $ignoreUploadedImages) = '';
+my ($zysys, $noCSS, $noJavascript, $noWPUpdate, $noWPRedownload, $aggressive, $simpleImageOptimization, $noImageOptimization, $ignoreUploadedImages, $onlyCore) = '';
 
-GetOptions('zysys'=>\$zysys, 'no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization, 'ignore-uploaded-images'=>\$ignoreUploadedImages);
+GetOptions('zysys'=>\$zysys, 'no-css'=>\$noCSS, 'no-javascript'=>\$noJavascript, 'no-js'=>\$noJavascript, 'no-wp-update'=>\$noWPUpdate, 'no-wp-redownload'=>\$noWPRedownload, 'aggressive'=>\$aggressive, 'simple-image-optimization'=>\$simpleImageOptimization, 'no-image-optimization'=>\$noImageOptimization, 'ignore-uploaded-images'=>\$ignoreUploadedImages, 'only-core'=>\$onlyCore);
 
 if ($zysys) {
     print "zysys";
@@ -80,14 +80,20 @@ along with compress-wordpress.  If not, see <http://www.gnu.org/licenses/>.
 my $nice = 17; # this is the nice value used for processes manipulating multiple files
 my $packageManagerInstall = "yum install -y";
 my $wpcontentdir;
+my $searchableDirectories;
 my @notInstalled;
 my $wpcli;
+
 do {
     @notInstalled = check_software();
     say foreach @notInstalled;
     $wpcli = "wp --allow-root ";
     install($_) foreach (@notInstalled);
 } while ($#notInstalled >= 0);
+
+#################
+# Get Variables #
+#################
 
 # use wp to check if this is the right path
 my $pathCheck = `$wpcli --allow-root status --directory=\`pwd\` 2>&1`;
@@ -107,6 +113,13 @@ if (-e "wp-config.php") {
     say "Please run this in the WordPress Installation directory -- wp-config.php must be present.";
     exit;
 }
+
+if ($onlyCore) {
+    $searchableDirectories = "wp-admin,wp-includes";
+} else {
+    $searchableDirectories = "wp-admin,wp-includes,$wpcontentdir";
+}
+
 if ($aggressive) {
     # Update Current Wordpress installation
     system("$wpcli plugin update --all; $wpcli theme update --all;$wpcli core update; $wpcli core update-db;") unless $noWPUpdate;
@@ -119,8 +132,8 @@ if ($aggressive) {
 }
 
 if (!$noCSS) {
-    # Get css files from wp-admin, wp-includes, and wp-content
-    my $files = `find {wp-admin,wp-includes,$wpcontentdir} -iname "*.css" -print`;
+    # Get css files from the $searchableDirectories
+    my $files = `find {$searchableDirectories} -iname "*.css" -print`;
     my @files = split /\n/, $files;
     # Protect style.css's (specifically themes) with find & sed
     system('find . -name "style.css" -print -exec sed -i "0,/\/\*/{s/\/\*\!*/\/*\!/}" {} \;');
@@ -151,8 +164,8 @@ if (!$noCSS) {
 }
 
 if (!$noJavascript) {
-    # Get JS files from wp-admin, wp-includes, and wp-content
-    my $files = `find {wp-admin,wp-includes,$wpcontentdir} -iname "*.js" -print`;
+    # Get JS files from $searchableDirectories
+    my $files = `find {$searchableDirectories} -iname "*.js" -print`;
     my @files = split /\n/, $files;
     # Run closure-compiler on found js
     my $previous = "";
@@ -190,8 +203,8 @@ if (!$noImageOptimization) {
     } else {
         $ignoreUploadedImages = "";
     }
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -n '.$nice.' optipng -o6 -fix {} \;');
-    system('find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -n '.$nice.' advdef -z -4 {} \;;find {wp-admin,wp-includes,'.$wpcontentdir.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -n '.$nice.' /usr/local/bin/mozjpeg -outfile {} {} \;;');
+    system('find {'.$searchableDirectories.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -n '.$nice.' optipng -o6 -fix {} \;');
+    system('find {'.$searchableDirectories.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(png\|PNG\)" -type f -exec nice -n '.$nice.' advdef -z -4 {} \;;find {'.$searchableDirectories.'} ' . $ignoreBlogsDirImgopt . ' -iregex ".*\.\(jpg\|JPG\|jpeg\|JPG\)" -type f -exec nice -n '.$nice.' /usr/local/bin/mozjpeg -outfile {} {} \;;');
 }
 
 say "Optimization Complete.";
