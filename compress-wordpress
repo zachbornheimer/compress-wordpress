@@ -197,7 +197,7 @@ if (!$noJavascript) {
 }
 
 if (!$noImageOptimization) {
-    my $ignoreBlogsDirImgopt;
+    my $ignoreBlogsDirImgopt = "";
     if ($ignoreUploadedImages) {
         $ignoreBlogsDirImgopt = "! -wholename '*/blogs.dir/*' ! -wholename '*/uploads/*' ";
     } else {
