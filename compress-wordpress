@@ -12,7 +12,7 @@
 # Command Line Options
 # --no-wp-update, --no-wp-redownload, --simple-image-optimzation,
 # --no-image-optimization, --ignore-uploaded-images, 
-# --aggressive, --no-css, --no-js, --no-javascript
+# --aggressive, --no-css, --no-js, --no-javascript, --only-core
 
 # Agressive updates wordpress, redownloads wordpress core to make sure everything is in-tact, if any no-* or simple-image-optimize is present, then it overrides the agressive image optimizations
 
@@ -52,7 +52,7 @@ At this time, the software defaults to yum as the package manager
 =head2 Wiki Documentation
 
 The documentation for this program is available on:
-http://zysys.org/wiki/index.php?title=Compress-wordpress
+https://codex.zysys.org/bin/view.cgi/Main/Compress-wordpress
 
 This documentation also includes explainations of the code flow.
 
