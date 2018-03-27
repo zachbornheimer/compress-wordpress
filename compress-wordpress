@@ -118,6 +118,7 @@ if ($onlyCore) {
     $searchableDirectories = "wp-admin,wp-includes";
 } else {
     $searchableDirectories = "wp-admin,wp-includes,$wpcontentdir";
+    $searchableDirectories =~ s/\n//g;
 }
 
 if ($aggressive) {
